@@ -1,5 +1,7 @@
 [package]
 name = "say"
+description = "provide schemas protection for json, yaml, toml"
+license = "MIT"
 version = "0.0.1"
 authors = ["Kilerd <blove694@gmail.com>"]
 edition = "2018"
