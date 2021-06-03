@@ -37,8 +37,8 @@ pub struct ListType {
     pub optional: bool,
     #[serde(default = "bool::default")]
     pub nullable: bool,
-    element_type: DataType,
-    limit: Option<u64>,
+    pub element_type: DataType,
+    pub limit: Option<u64>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -74,6 +74,4 @@ pub struct NumberType {
     pub optional: bool,
     #[serde(default = "bool::default")]
     pub nullable: bool,
-    max: Option<i32>,
-    min: Option<i32>,
 }
