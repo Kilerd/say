@@ -1,3 +1,9 @@
+pub mod schema;
+pub mod validator;
+
+
+pub use schema::Schema;
+
 #[cfg(test)]
 mod tests {
     #[test]
