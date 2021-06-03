@@ -2,9 +2,6 @@ name: Develop Build
 
 on:
   push:
-    branches:
-      - master
-      - develop
 
 jobs:
   style-check:
