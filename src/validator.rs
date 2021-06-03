@@ -55,10 +55,15 @@ impl Validator for StringType {
             Value::String(inner) => inner,
             _ => unreachable!()
         };
-        if let Some(limit) = self.length {
-            if inner.len() as u64 > limit { return false; }
+        if let Some(limit) = &self.length {
+            if inner.len() as u64 > *limit { return false; }
         }
-
+        if let Some(reg) = &self.regex {
+            let result = regex::Regex::new(&format!("^{}$", reg)).unwrap();
+            if !result.is_match(inner) {
+                return false;
+            }
+        }
         true
     }
 }
@@ -140,7 +145,7 @@ mod tests {
             optional: false,
             nullable: false,
             length: None,
-            regex: None
+            regex: None,
         };
         assert_eq!(false, validator.validate_type(&Value::Bool(true)));
         assert_eq!(false, validator.validate_type(&Value::Bool(false)));
@@ -187,7 +192,7 @@ mod tests {
             optional: false,
             nullable: false,
             length: Some(10),
-            regex: None
+            regex: None,
         };
         assert_eq!(true, string_type.validate(&Value::String("1".to_owned())));
         assert_eq!(true, string_type.validate(&Value::String("".to_owned())));
@@ -195,5 +200,21 @@ mod tests {
         assert_eq!(true, string_type.validate(&Value::String("emoji👍".to_owned())));
         assert_eq!(true, string_type.validate(&Value::String("utf8中文".to_owned())));
         assert_eq!(false, string_type.validate(&Value::String("12345678901".to_owned())));
+    }
+
+    #[test]
+    fn string_type_should_match_by_regex() {
+        let string_type = StringType {
+            optional: false,
+            nullable: false,
+            length: None,
+            regex: Some("[0-9]+".to_owned()),
+        };
+        assert_eq!(true, string_type.validate(&Value::String("1".to_owned())));
+        assert_eq!(false, string_type.validate(&Value::String("".to_owned())));
+        assert_eq!(true, string_type.validate(&Value::String("1234567890".to_owned())));
+        assert_eq!(false, string_type.validate(&Value::String("emoji👍123".to_owned())));
+        assert_eq!(false, string_type.validate(&Value::String("utf8中文".to_owned())));
+        assert_eq!(true, string_type.validate(&Value::String("12345678901".to_owned())));
     }
 }
