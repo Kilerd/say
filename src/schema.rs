@@ -56,8 +56,8 @@ pub struct StringType {
     pub optional: bool,
     #[serde(default = "bool::default")]
     pub nullable: bool,
-    length: Option<u64>,
-    regex: Option<String>,
+    pub length: Option<u64>,
+    pub regex: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

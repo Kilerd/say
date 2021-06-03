@@ -1,5 +1,5 @@
 use serde_json::Value;
-use crate::schema::{BooleanType, DictType, LiteralType};
+use crate::schema::{BooleanType, DictType, LiteralType, StringType};
 
 pub trait Validator {
     fn validate_type(&self, node: &Value) -> bool;
@@ -45,6 +45,24 @@ impl Validator for LiteralType {
     }
 }
 
+impl Validator for StringType {
+    fn validate_type(&self, node: &Value) -> bool {
+        matches!(node, Value::String(..))
+    }
+
+    fn validate_meta(&self, node: &Value) -> bool {
+        let inner = match node {
+            Value::String(inner) => inner,
+            _ => unreachable!()
+        };
+        if let Some(limit) = self.length {
+            if inner.len() as u64 > limit { return false; }
+        }
+
+        true
+    }
+}
+
 
 impl Validator for BooleanType {
     fn validate_type(&self, node: &Value) -> bool {
@@ -59,7 +77,7 @@ impl Validator for BooleanType {
 
 #[cfg(test)]
 mod tests {
-    use crate::schema::{BooleanType, DictType, DataType, LiteralType};
+    use crate::schema::{BooleanType, DictType, DataType, LiteralType, StringType};
     use serde_json::{Value, Number};
     use crate::validator::Validator;
     use std::collections::HashMap;
@@ -117,6 +135,23 @@ mod tests {
     }
 
     #[test]
+    fn test_string_type() {
+        let validator = StringType {
+            optional: false,
+            nullable: false,
+            length: None,
+            regex: None
+        };
+        assert_eq!(false, validator.validate_type(&Value::Bool(true)));
+        assert_eq!(false, validator.validate_type(&Value::Bool(false)));
+        assert_eq!(false, validator.validate_type(&Value::Null));
+        assert_eq!(true, validator.validate_type(&Value::String("it".to_owned())));
+        assert_eq!(false, validator.validate_type(&json!([])));
+        assert_eq!(false, validator.validate_type(&Value::Number(Number::from(1i8))));
+        assert_eq!(false, validator.validate_type(&json!({ "an": "object" })));
+    }
+
+    #[test]
     fn dict_type_should_have_one_field() {
         let mut map = HashMap::new();
         map.insert("a".to_owned(), DataType::Boolean(Box::new(BooleanType { optional: false, nullable: false })));
@@ -144,5 +179,21 @@ mod tests {
         assert_eq!(true, validator.validate(&Value::String("b".to_owned())));
         assert_eq!(true, validator.validate(&Value::String("c".to_owned())));
         assert_eq!(false, validator.validate(&Value::String("d".to_owned())));
+    }
+
+    #[test]
+    fn string_type_should_limit_with_length() {
+        let string_type = StringType {
+            optional: false,
+            nullable: false,
+            length: Some(10),
+            regex: None
+        };
+        assert_eq!(true, string_type.validate(&Value::String("1".to_owned())));
+        assert_eq!(true, string_type.validate(&Value::String("".to_owned())));
+        assert_eq!(true, string_type.validate(&Value::String("1234567890".to_owned())));
+        assert_eq!(true, string_type.validate(&Value::String("emoji👍".to_owned())));
+        assert_eq!(true, string_type.validate(&Value::String("utf8中文".to_owned())));
+        assert_eq!(false, string_type.validate(&Value::String("12345678901".to_owned())));
     }
 }
