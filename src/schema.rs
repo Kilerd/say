@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
-use crate::validator::Validator;
-use serde_json::Value;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Schema {

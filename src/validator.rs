@@ -45,6 +45,7 @@ impl Validator for DictType {
             Value::Object(inner) => inner,
             _ => unreachable!()
         };
+        
         for (key, value) in object.iter() {
             let contains_normal_field = self.fields.contains_key(key);
             if contains_normal_field {
